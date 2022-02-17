@@ -1,4 +1,5 @@
 
+from curses import ALL_MOUSE_EVENTS
 import numpy
 import time
 
@@ -46,14 +47,15 @@ class Simulator:
     ##########
     def time_in(self,value,dep):
         data=int(numpy.random.exponential(3.0,size=1))
+        #while(data<=value and not any(d['simTime']<=data for d in self.futureEvent)):
         while(data<=value and not any(d['simTime']<=data for d in self.futureEvent)):
-            data=int(numpy.random.exponential(3.0,size=1))
+            data=int(numpy.random.exponential(3.0,size=1))+(value+1)
         return data
 
 
     def generate_Time(self):
 
-        data=int(numpy.random.exponential(3.0,size=1))
+        data=1+(int(numpy.random.exponential(3.0,size=1))%(11-1))
         return data
     ###########AW
 
@@ -93,9 +95,10 @@ class Simulator:
 
 
                 arrive=self.generate_Time()
-                service=self.generate_Time()
+                #service=self.generate_Time()
                 
                 self.futureEvent.append({"customer":custNum[0],"simTime":arrive,"event":"arrive"})
+                print(self.futureEvent)
                 #customerLocal.append({"customer":custNum[0],"interarrival":custNum[0],"arrival":self.futureEvent[0]["simTime"],"serviceTime":service})
             ##########
             if(self.futureEvent):
@@ -112,6 +115,7 @@ class Simulator:
 
 
                     #######
+                    service=self.generate_Time()
                     data=self.time_in(current["simTime"],None)
                    
                     self.futureEvent.append({"customer":current["customer"],"simTime":data,"event":"departure"}) 
@@ -127,7 +131,8 @@ class Simulator:
                         #i+=1
                     self.futureEvent=sorted(self.futureEvent, key=lambda d: d["simTime"])
                     customerLocal=sorted(customerLocal, key=lambda d: d["arrival"])
-                    #print(str(self.futureEvent)+"\n\n")
+                    #print(str(customerLocal)+'\n')
+                    print(str(self.futureEvent)+"\n\n")
                     
                    
 
@@ -163,7 +168,7 @@ class Simulator:
 
                     else:self.T[len(self.queue)]=self.i-tStart
                     
-                    print(str(self.queue)+'\n')
+                    #print(str(self.queue)+'\n')
                     self.N+=1
                     self.theta[current["customer"]]=self.i-self.queue[0]["arrival"]
                     self.queue.pop(0)
@@ -177,7 +182,7 @@ class Simulator:
 
                 if len(self.queue)==0:
                     self.serverState=0
-                    #print("\nFree\n")
+                    print("\nFree\n")
                     if(len(self.futureEvent)==0):
                         break
 
