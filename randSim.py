@@ -50,14 +50,15 @@ class Simulator:
             data=int(numpy.random.exponential(3.0,size=1))+(value+1)
         return data
 
-    def waitTime(self,custLocal,currentTime):
-        if not custLocal:
+    def waitTime(self,custLocal,currentServing,currentTime):
+        if  len(custLocal)==1:
             return currentTime
         else:
-            prova=custLocal[0]
-            res=prova['serviceTime']-currentTime
+            prova=currentServing
+            res=currentTime-prova['arrival']+prova['serviceTime']
+            print(res)
             for item in custLocal:
-                res+=(item['arrival']+item['serviceTime'])
+                res+=(item['serviceTime'])
 
             return res
 
@@ -119,15 +120,16 @@ class Simulator:
 
                 if current["event"]=="arrive":
                     self.futureEvent.pop(0) #the customer is being served
-                    
-
+                    #print(self.queue)
                     #######
 
                     service=self.generate_Time()
                     data=self.time_in(current["simTime"],None)
-                    wait=self.waitTime(customerLocal,self.i)
-                    self.futureEvent.append({"customer":current["customer"],"simTime":wait+service,"event":"departure"}) #we prepare the future event departure of the arrived customer 
                     customerLocal.append({"customer":current["customer"],"interarrival":data-current["simTime"],"arrival":current['simTime'],"serviceTime":service})# we put the customer into the local array
+                    self.queue.append(customerLocal[0])
+                    wait=self.waitTime(customerLocal,self.queue[0],self.i)
+                    self.futureEvent.append({"customer":current["customer"],"simTime":wait+service,"event":"departure"}) #we prepare the future event departure of the arrived customer 
+                    #customerLocal.append({"customer":current["customer"],"interarrival":data-current["simTime"],"arrival":current['simTime'],"serviceTime":service})# we put the customer into the local array
 
                     if(custNum):# we controll if all the customer have been served
                         custNum.pop(0) # we pop to say that a customer has been served
@@ -152,7 +154,7 @@ class Simulator:
                     else:
                         self.T[len(self.queue)]=self.i-tStart
                     
-                    self.queue.append(customerLocal[0])
+                    #self.queue.append(customerLocal[0])
                     #self.queue=sorted(self.queue, key=lambda d: d["arrival"])
                     print("Serving: "+str(self.queue[0])+'\n')
                     customerLocal.pop(0)
@@ -162,6 +164,8 @@ class Simulator:
                     
                 
                 elif current["event"]=="departure":
+
+
                     ######
                     self.futureEvent.pop(0)
                     data=self.time_in(data,None)
@@ -213,5 +217,5 @@ customerNum=int(input())
 
 Obsim.begin(customerNum)
 
-print("\n","T:",Obsim.get_T(),"\n","theta:",Obsim.get_theta(),"\n","ThetaKi:",Obsim.get_thetaKi(),"\n","X:",Obsim.get_X(),"\n","V:",Obsim.get_V(),"\n")
+print("\n","T:",Obsim.get_T(),"\n","theta:",Obsim.get_theta(),"\n","ThetaKi:",Obsim.get_thetaKi(),"\n","X:",Obsim.get_X(),"\n","V:","\n")
 
