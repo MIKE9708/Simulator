@@ -1,5 +1,5 @@
 import numpy
-
+import time
 
 '''
 customer_structure=[{"customer":1,"interarrival":0,"arrival":0,"serviceTime":3},
@@ -50,17 +50,19 @@ class Simulator:
             data=int(numpy.random.exponential(3.0,size=1))+(value+1)
         return data
 
-    def waitTime(self,custLocal,currentServing,currentTime):
-        if  len(custLocal)==1:
-            return currentTime
-        else:
-            prova=currentServing
-            res=currentTime-prova['arrival']+prova['serviceTime']
-            print(res)
-            for item in custLocal:
-                res+=(item['serviceTime'])
-
-            return res
+    def waitTime(self,queue,currentServing,arrivedUser,currentTime):
+            if(len(queue)==1):
+                res=0
+            elif len(queue)==2:
+                res= currentServing['serviceTime']-(currentTime-currentServing['arrival'])
+            
+            elif len(queue)>2:
+                res=currentServing['serviceTime']-(currentTime-currentServing['arrival'])
+                for item in queue:
+                    res+=(item['serviceTime'])
+                res=res-currentServing['serviceTime']-arrivedUser['serviceTime']
+            
+            return (res)
 
     def generate_Time(self):#this is used for the service time but is limited in a range between 10 and 1
 
@@ -89,29 +91,26 @@ class Simulator:
 
     def begin(self,customer):
         
-        custNum=[*range(0,customer)]#an array of N element corrwsponding to the number of customer that are specified
+        custNum=[*range(1,customer+1)]#an array of N element corrwsponding to the number of customer that are specified
         tStart=0
         current=None #current customer to be served
         customerLocal=[]#customer.copy() array of the customer to be served
+        self.futureEvent.append({"customer":custNum[0],"simTime":0,"event":"arrive"})
         #while(len(self.futureEvent)!=0):
         ##########
         while(1):
-
-            
-            
-            if(self.i==0):
-
-
-                arrive=self.generate_Time() #first customer to arrive
+            #time.sleep(1)
+            print(self.i)
+                #arrive=self.generate_Time() #first customer to arrive
                 #service=self.generate_Time()
                 
-                self.futureEvent.append({"customer":custNum[0],"simTime":arrive,"event":"arrive"})# adding to the future event list
+                #self.futureEvent.append({"customer":custNum[0],"simTime":1,"event":"arrive"})# adding to the future event list
                 #print(self.futureEvent)
                 #customerLocal.append({"customer":custNum[0],"interarrival":custNum[0],"arrival":self.futureEvent[0]["simTime"],"serviceTime":service})
             ##########
+            
             if(self.futureEvent):# if not empty
                 current=self.futureEvent[0] #the current is the customer in the first place of the future event list
-            
             else: break
 
             if current["simTime"]==self.i :# we check if the current customer arrive or depart in the current simulation time
@@ -127,8 +126,10 @@ class Simulator:
                     data=self.time_in(current["simTime"],None)
                     customerLocal.append({"customer":current["customer"],"interarrival":data-current["simTime"],"arrival":current['simTime'],"serviceTime":service})# we put the customer into the local array
                     self.queue.append(customerLocal[0])
-                    wait=self.waitTime(customerLocal,self.queue[0],self.i)
-                    self.futureEvent.append({"customer":current["customer"],"simTime":wait+service,"event":"departure"}) #we prepare the future event departure of the arrived customer 
+                    wait=self.waitTime(self.queue,self.queue[0],customerLocal[0],self.i)
+                    print("ATTESA USER:"+str(wait))
+                    print("##############"+str(customerLocal)+"#################")
+                    self.futureEvent.append({"customer":current["customer"],"simTime":self.i+wait+service,"event":"departure"}) #we prepare the future event departure of the arrived customer 
                     #customerLocal.append({"customer":current["customer"],"interarrival":data-current["simTime"],"arrival":current['simTime'],"serviceTime":service})# we put the customer into the local array
 
                     if(custNum):# we controll if all the customer have been served
@@ -167,6 +168,7 @@ class Simulator:
 
 
                     ######
+                    print(self.queue)
                     self.futureEvent.pop(0)
                     data=self.time_in(data,None)
                     #tStart=self.i
@@ -204,7 +206,7 @@ class Simulator:
 
                 if len(self.queue)==0:# if in the we do not have anyone the state is set to FREE
                     self.serverState=0
-                    print("\nFree\n")
+                   # print("\nFree\n")
                     if(len(self.futureEvent)==0):
                         break
 
