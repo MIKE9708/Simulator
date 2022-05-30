@@ -90,11 +90,17 @@ class Simulator:
         return 1-(self.T[0]/self.i)
 
     def begin(self,customer):
-        
+        self.futureEvent=[]
         custNum=[*range(1,customer+1)]#an array of N element corrwsponding to the number of customer that are specified
         tStart=0
+        self.i=0
+        self.N=0
+        self.queue=[]
+        self.theta={}
+        self.T={}
         current=None #current customer to be served
         customerLocal=[]#customer.copy() array of the customer to be served
+        
         self.futureEvent.append({"customer":custNum[0],"simTime":0,"event":"arrive"})
         #while(len(self.futureEvent)!=0):
         ##########
@@ -114,7 +120,7 @@ class Simulator:
             else: break
 
             if current["simTime"]==self.i :# we check if the current customer arrive or depart in the current simulation time
-                print("Istant: "+str(self.i)+" Current User: "+str(current)+"\n")
+                #print("Istant: "+str(self.i)+" Current User: "+str(current)+"\n")
 
 
                 if current["event"]=="arrive":
@@ -127,8 +133,8 @@ class Simulator:
                     customerLocal.append({"customer":current["customer"],"interarrival":data-current["simTime"],"arrival":current['simTime'],"serviceTime":service})# we put the customer into the local array
                     self.queue.append(customerLocal[0])
                     wait=self.waitTime(self.queue,self.queue[0],customerLocal[0],self.i)
-                    print("ATTESA USER:"+str(wait))
-                    print("##############"+str(customerLocal)+"#################")
+                    #print("ATTESA USER:"+str(wait))
+                    #print("##############"+str(customerLocal)+"#################")
                     self.futureEvent.append({"customer":current["customer"],"simTime":self.i+wait+service,"event":"departure"}) #we prepare the future event departure of the arrived customer 
                     #customerLocal.append({"customer":current["customer"],"interarrival":data-current["simTime"],"arrival":current['simTime'],"serviceTime":service})# we put the customer into the local array
 
@@ -157,7 +163,7 @@ class Simulator:
                     
                     #self.queue.append(customerLocal[0])
                     #self.queue=sorted(self.queue, key=lambda d: d["arrival"])
-                    print("Serving: "+str(self.queue[0])+'\n')
+                    #print("Serving: "+str(self.queue[0])+'\n')
                     customerLocal.pop(0)
 
                     self.serverState=1
@@ -168,11 +174,11 @@ class Simulator:
 
 
                     ######
-                    print(self.queue)
+                    #print(self.queue)
                     self.futureEvent.pop(0)
                     data=self.time_in(data,None)
                     #tStart=self.i
-                    print("Istant  "+str(self.i)+ " user: "+str(current['customer'])+" is departuring\n")
+                    #print("Istant  "+str(self.i)+ " user: "+str(current['customer'])+" is departuring\n")
                     if(custNum):
                         custNum.pop(0)
                     if(custNum):# if we have still other customer to be served
@@ -214,10 +220,12 @@ class Simulator:
                     
                     
 Obsim=Simulator()
+print("Number of simulations: ")
+simulations=int(input())
 print("Number of customers: ")
 customerNum=int(input())
 
-Obsim.begin(customerNum)
-
-print("\n","T:",Obsim.get_T(),"\n","theta:",Obsim.get_theta(),"\n","ThetaKi:",Obsim.get_thetaKi(),"\n","X:",Obsim.get_X(),"\n","V:","\n")
-
+for index in range(0,simulations):
+    Obsim.begin(customerNum)
+    print("\n","T:",Obsim.get_T(),"\n","theta:",Obsim.get_theta(),"\n","ThetaKi:",Obsim.get_thetaKi(),"\n","X:",Obsim.get_X(),"\n","V:","\n")
+    print("Simulation: ",index)

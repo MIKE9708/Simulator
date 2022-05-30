@@ -1,56 +1,43 @@
-
+from asyncio import futures
+from multiprocessing.connection import wait
 import numpy
 import time
-customer_structure=[{"customer":1,"interarrival":0,"arrival":0,"serviceTime":3},
-{"customer":2,"interarrival":2,"arrival":2,"serviceTime":2},
-{"customer":3,"interarrival":4,"arrival":6,"serviceTime":3},
-{"customer":4,"interarrival":1,"arrival":7,"serviceTime":4},
-{"customer":5,"interarrival":1,"arrival":8,"serviceTime":2}]
-
-
-calendar=[{"customer":1,"simTime":0,"event":"arrive"},
-{"customer":2,"simTime":2,"event":"arrive"},
-{"customer":1,"simTime":3,"event":"departure"},
-{"customer":2,"simTime":5,"event":"departure"}, 
-{"customer":3,"simTime":6,"event":"arrive"},
-{"customer":4,"simTime":7,"event":"arrive"},
-{"customer":5,"simTime":8,"event":"arrive"},
-{"customer":3,"simTime":9,"event":"departure"},
-{"customer":4,"simTime":13,"event":"departure"},
-{"customer":5,"simTime":15,"event":"departure"}] 
-#sortedi=sorted(a, key=lambda d: d["time"])
-
-
 
 class Simulator:
 
-    def __init__(self,calendar):
-        self.serverState=None
+    def __init__(self):
+        self.serverState=0 #define the status of entity who's serving {FREE=0|BUSY=1}
         self.queue=[]
         self.time=0
         self.N=0
-        self.i=0
-        self.T={}
-        self.theta={}
-        self.futureEvent=[]#calendar.copy()
-
+        self.i=0 #the simulation time
+        self.T={} #value for T
+        self.theta={} #value for theta
+        self.futureEvent=[]#calendar.copy() this will contain the overall event that will happen during the simulation
+        self.current={}
 
     def get_T(self):
         return self.T
 
 
     ##########
-    def time_in(self,value,dep):
-        data=int(numpy.random.exponential(3.0,size=1))
-        while(data<=value and data!=dep):
-            data=int(numpy.random.exponential(3.0,size=1))
-        return data
+    def time_in(self):
+        data=numpy.random.exponential(3.0,size=1)
 
+        return data[0]
 
-    def generate_Time(self):
+    def waitTime(self,currentServing,arrivedUser,currentTime):
+        res=currentServing['serviceTime']-(currentTime-currentServing['arrival'])
+        for item in self.queue:
+            res+=(item['serviceTime'])
+            res=res-currentServing['serviceTime']-arrivedUser['serviceTime']
+            
+        return (res)
 
-        data=int(numpy.random.exponential(3.0,size=1))
-        return data
+    def generate_Time(self):#this is used for the service time but is limited in a range between 10 and 1
+
+        data=numpy.random.exponential(3.0,size=1)
+        return data[0]
     ###########AW
 
     def get_theta(self):
@@ -73,99 +60,127 @@ class Simulator:
         return 1-(self.T[0]/self.i)
 
     def begin(self,customer):
-
+        self.futureEvent=[]
+        custNum=[*range(1,customer+1)]#an array of N element corrwsponding to the number of customer that are specified
         tStart=0
-        current=None
-        customerLocal=[]#customer.copy()
-        i=1
-        #while(len(self.futureEvent)!=0):
-        ##########
-        while(self.N!=10):
+        self.i=0
+        self.N=0
+        data=0
+        self.queue=[]
+        self.theta={}
+        self.T={}
+        
+        self.futureEvent.append({"customer":custNum[0],"simTime":0,"event":"arrive"})
+        while(1):
+            print(self.i)
 
-            
-            
-            if(self.i==0):
+            if(self.futureEvent):
+                print(self.futureEvent)
+                if self.futureEvent[0]["simTime"]==self.i:
 
+                    if self.futureEvent[0]["event"]=="arrive":
+                        
+                        service=self.generate_Time()
+                        data=self.time_in()
 
-                arrive=self.generate_Time()
-                service=self.generate_Time()
+                        if(self.serverState==0):
+                            self.current={"customer":self.futureEvent[0]["customer"],
+                                "interarrival":data-self.futureEvent[0]["simTime"],
+                                "arrival":self.futureEvent[0]['simTime'],
+                                "serviceTime":service
+                                }
+                            self.serverState=1
+
+                            self.futureEvent.append({"customer":self.futureEvent[0]["customer"],
+                                "simTime":self.i+service,
+                                "event":"departure"
+                                })
+                            self.futureEvent=sorted(self.futureEvent, key=lambda d: d["simTime"])
+                        else:
+                            self.queue.append({"customer":self.futureEvent[0]["customer"],
+                                "interarrival":data-self.futureEvent[0]["simTime"],
+                                "arrival":self.futureEvent[0]['simTime'],
+                                "serviceTime":service
+                                })
+ 
+                        
+                        if(custNum):
+                            custNum.pop(0)
+                        if(custNum):
+                            data=self.time_in()
+                            self.futureEvent.append({"customer":custNum[0],
+                                "simTime":data+self.futureEvent[len(self.futureEvent)-1]["simTime"],
+                                "event":"arrive"
+                                })
+                            
+                        self.futureEvent.pop(0)
+                        self.futureEvent=sorted(self.futureEvent, key=lambda d: d["simTime"])
+
+                    
+                    elif self.futureEvent[0]["event"]=="departure":
+                        self.futureEvent.pop(0)
+                        if(custNum):
+                            custNum.pop(0)
+                        if(custNum):
+                            data=self.time_in()
+                            self.futureEvent.append({"customer":custNum[0],
+                                "simTime":data+self.futureEvent[len(self.futureEvent)-1]["simTime"],
+                                "event":"arrive"
+                                })
+                            self.futureEvent=sorted(self.futureEvent, key=lambda d: d["simTime"])
+                        if len(self.queue) in self.T.keys():
+                            self.T[len(self.queue)]+=self.i-tStart
+                        else:self.T[len(self.queue)]=self.i-tStart
+                        
+                        self.N+=1
+                        self.theta[self.current["customer"]]=self.i-self.current["arrival"]
+                        if(self.queue):
+                            self.current=self.queue[0]
+                            self.futureEvent.append({"customer":self.queue[0]['customer'],
+                                "simTime":self.i+self.queue[0]['serviceTime'],
+                                "event":"departure"
+                                })
+                            self.queue.pop(0)
+                            self.futureEvent=sorted(self.futureEvent, key=lambda d: d["simTime"])
+                        else:
+                            self.serverState=0
+
+                        #self.futureEvent.pop(0)
+                        self.futureEvent=sorted(self.futureEvent, key=lambda d: d["simTime"])
+
+                        if(self.queue):
+                            print("Istant "+str(self.i)+" Now serving costumer : "+str(self.queue[0])+'\n')
+                        tStart=self.i
                 
-                self.futureEvent.append({"customer":i,"simTime":arrive,"event":"arrive"})
-                customerLocal.append({"customer":i,"interarrival":0,"arrival":self.futureEvent[0]["simTime"],"serviceTime":service})
-            ##########
-            current=self.futureEvent[0].copy()
-
-
-            if current["simTime"]==self.i :
-                print(str(current)+"\n")
-
-
-                if current["event"]=="arrive":
-                    self.futureEvent.pop(0)
-
-
-                    #######
-                    data=self.time_in(current["simTime"],None)
-                    self.futureEvent.append({"customer":i,"simTime":data,"event":"departure"})
-                    data=self.time_in(current["simTime"],data)
-                    self.futureEvent.append({"customer":i+1,"simTime":data,"event":"arrive"})
-                    customerLocal.append({"customer":i+1,"interarrival":data-current["simTime"],"arrival":data,"serviceTime":service})
-                    self.futureEvent=sorted(self.futureEvent, key=lambda d: d["simTime"])
-                    i+=1
-                    print(str(self.futureEvent)+"\n\n")
-
-                   
-
-                    #######
-                    
-                    if len(self.queue) in self.T.keys():
-                        self.T[len(self.queue)]+=self.i-tStart
-                    else:self.T[len(self.queue)]=self.i-tStart
-    
-                    self.queue.append(customerLocal[0])
-                    customerLocal.pop(0)
-
-                    self.serverState=1
-                    tStart=self.i
-                    
-                
-                elif current["event"]=="departure":
-                    ######
-                    self.futureEvent.pop(0)
-                    data=self.time_in(data,None)
-                    
-                    self.futureEvent.append({"customer":i+1,"simTime":data,"event":"arrive"})
-                    customerLocal.append({"customer":i+1,"interarrival":data-current["simTime"],"arrival":data,"serviceTime":service})
-                    print(self.futureEvent[0],i+1)
-                    self.futureEvent=sorted(self.futureEvent, key=lambda d: d["simTime"])
-                    #i+=1
-                    print(str(self.futureEvent)+"\n\n")
-                    #######
-                    
-                    if len(self.queue) in self.T.keys():
-                        self.T[len(self.queue)]+=self.i-tStart
-
-                    else:self.T[len(self.queue)]=self.i-tStart
-                    self.N+=1
-                    self.theta[current["customer"]]=self.i-self.queue[0]["arrival"]
-                    self.queue.pop(0)
-                    tStart=self.i
-
-
-               
-                else:
-                    self.T[len(self.queue)]=self.i-tStart
+                    else:
+                        self.T[len(self.queue)]=self.i-tStart
             else:
 
                 if len(self.queue)==0:
                     self.serverState=0
-                    print("\nFree\n")
-
-                self.i+=1
+                    if(len(self.futureEvent)==0):
+                        break
+            if(self.futureEvent):
+                self.i=self.futureEvent[0]["simTime"]
                     
                     
-Obsim=Simulator(calendar)
-Obsim.begin(customer_structure)
+Obsim=Simulator()
+print("Number of simulations: ")
+simulations=int(input())
+print("Number of customers: ")
+customerNum=int(input())
 
-print("\n","T:",Obsim.get_T(),"\n","theta:",Obsim.get_theta(),"\n","ThetaKi:",Obsim.get_thetaKi(),"\n","X:",Obsim.get_X(),"\n","V:",Obsim.get_V(),"\n")
-
+for index in range(simulations):
+    
+    Obsim.begin(customerNum)
+    
+    print("\n","T:",Obsim.get_T(),"\n",
+    "theta:",Obsim.get_theta(),"\n",
+    "ThetaKi:",Obsim.get_thetaKi(),"\n",
+    "X:",Obsim.get_X(),
+    "\n","V:","\n"
+    )
+    print("End simulation: ",index)
+#nqObsim=Simulator()
+#nqObsim.begin(customerNum)
+#print("\n","T:",nqObsim.get_T(),"\n","theta:",nqObsim.get_theta(),"\n","ThetaKi:",nqObsim.get_thetaKi(),"\n","X:",nqObsim.get_X(),"\n","V:","\n")
