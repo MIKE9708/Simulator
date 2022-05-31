@@ -10,7 +10,7 @@ class Simulator:
         self.i=0 #the simulation time
         self.T={} #value for T
         self.theta={} #value for theta
-        self.futureEvent=[]#calendar.copy() this will contain the overall event that will happen during the simulation
+        self.futureEvent=[]
         self.current={}
 
     ################################################################################################################################################################################################
@@ -176,11 +176,12 @@ print("Show info ? (y/n): ")
 info=input()
 
 for index in range(simulations):
+    
     Obsim.begin(customerNum)
     print("\n","T:",Obsim.get_T(),"\n",
-    "theta:",Obsim.get_theta(),"\n",
-    "ThetaKi:",Obsim.get_thetaKi(),"\n",
-    "X:",Obsim.get_X(),
-    "\n","V:",Obsim.get_V(),"\n")
+        "theta:",Obsim.get_theta(),"\n",
+        "ThetaKi:",Obsim.get_thetaKi(),"\n",
+        "X:",Obsim.get_X(),
+        "\n","V:",Obsim.get_V(),"\n")
     print("End simulation: ",index)
 
