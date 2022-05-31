@@ -2,7 +2,6 @@ import numpy
 import time
 
 class Simulator:
-
     def __init__(self):
         self.serverState=0 #define the status of entity who's serving {FREE=0|BUSY=1}
         self.queue=[]
@@ -13,6 +12,7 @@ class Simulator:
         self.theta={} #value for theta
         self.futureEvent=[]#calendar.copy() this will contain the overall event that will happen during the simulation
         self.current={}
+
     ################################################################################################################################################################################################
     
     def restart(self):
@@ -77,7 +77,7 @@ class Simulator:
             if(self.futureEvent):
                 if info=='y':
                     print(self.i)
-                    print(self.futureEvent)
+                    #print(self.futureEvent)
 
                 if self.futureEvent[0]["simTime"]==self.i:
                     
@@ -106,13 +106,10 @@ class Simulator:
                                 "serviceTime":service
                                 })
  
-                        
                         if(custNum):
-
                             custNum.pop(0)
 
                         if(custNum):
-
                             data=self.time_in()
                             self.futureEvent.append({"customer":custNum[0],
                                 "simTime":data+self.futureEvent[len(self.futureEvent)-1]["simTime"],
@@ -123,25 +120,20 @@ class Simulator:
 
                     
                     elif self.futureEvent[0]["event"]=="departure":
-
                         self.futureEvent.pop(0)
-
                         if(custNum):
                             custNum.pop(0)
-
                         if(custNum):
                             data=self.time_in()
                             self.futureEvent.append({"customer":custNum[0],
                                 "simTime":data+self.futureEvent[len(self.futureEvent)-1]["simTime"],
                                 "event":"arrive"})
                             self.futureEvent=sorted(self.futureEvent, key=lambda d: d["simTime"])
-
                         if len(self.queue) in self.T.keys():
                             self.T[len(self.queue)]+=self.i-tStart
-                        
                         else:
                             self.T[len(self.queue)]=self.i-tStart
-                        
+
                         self.N+=1
                         self.theta[self.current["customer"]]=self.i-self.current["arrival"]
 
@@ -160,16 +152,14 @@ class Simulator:
 
                         if(self.queue):
                             if info=='y':
-                                print("Istant "+str(self.i)+" Now serving costumer : "+str(self.queue[0])+'\n')
+                                print(str(self.queue)+'\n')
                             tStart=self.i
                 
                     else:
                         self.T[len(self.queue)]=self.i-tStart
             else:
-
                 if len(self.queue)==0:
                     self.serverState=0
-
                     if(len(self.futureEvent)==0):
                         break
 
@@ -191,6 +181,6 @@ for index in range(simulations):
     "theta:",Obsim.get_theta(),"\n",
     "ThetaKi:",Obsim.get_thetaKi(),"\n",
     "X:",Obsim.get_X(),
-    "\n","V:","\n")
+    "\n","V:",Obsim.get_V(),"\n")
     print("End simulation: ",index)
 
