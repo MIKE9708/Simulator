@@ -59,6 +59,7 @@ class Simulator:
     ################################################################################################################################################################################################
    
     def get_V(self):
+        print(self.i)
         return 1-(self.T[0]/self.i)
 
     ################################################################################################################################################################################################
@@ -84,6 +85,11 @@ class Simulator:
                     if self.futureEvent[0]["event"]=="arrive":
                         service=self.generate_Time()
                         data=self.time_in()
+
+                        if len(self.queue) in self.T.keys():
+                            self.T[len(self.queue)]+=self.i-tStart
+                        else:
+                            self.T[len(self.queue)]=self.i-tStart
 
                         if(self.serverState==0):
                             self.current={"customer":self.futureEvent[0]["customer"],
@@ -117,10 +123,11 @@ class Simulator:
                             
                         self.futureEvent.pop(0)
                         self.futureEvent=sorted(self.futureEvent, key=lambda d: d["simTime"])
-
+                        tStart=self.i
                     
                     elif self.futureEvent[0]["event"]=="departure":
                         self.futureEvent.pop(0)
+                        tStart=self.i
                         if(custNum):
                             custNum.pop(0)
                         if(custNum):
@@ -143,6 +150,7 @@ class Simulator:
                                 "simTime":self.i+self.queue[0]['serviceTime'],
                                 "event":"departure"})
                             self.queue.pop(0)
+                            
                             self.futureEvent=sorted(self.futureEvent, key=lambda d: d["simTime"])
 
                         else:
@@ -153,7 +161,7 @@ class Simulator:
                         if(self.queue):
                             if info=='y':
                                 print(str(self.queue)+'\n')
-                            tStart=self.i
+                            
                 
                     else:
                         self.T[len(self.queue)]=self.i-tStart
@@ -176,7 +184,6 @@ print("Show info ? (y/n): ")
 info=input()
 
 for index in range(simulations):
-    
     Obsim.begin(customerNum)
     print("\n","T:",Obsim.get_T(),"\n",
         "theta:",Obsim.get_theta(),"\n",

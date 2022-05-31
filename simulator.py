@@ -82,8 +82,9 @@ class Simulator:
                     
                     if len(self.queue) in self.T.keys():
                         self.T[len(self.queue)]+=self.i-tStart
+                    else:
+                        self.T[len(self.queue)]=self.i-tStart
 
-                    else:self.T[len(self.queue)]=self.i-tStart
                     print(str(self.queue)+'\n')
                     self.N+=1
                     print(current)
