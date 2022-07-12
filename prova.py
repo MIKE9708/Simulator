@@ -1,7 +1,20 @@
+from hashlib import new
 from math import sqrt
 from hamcrest import none
 import numpy
-import time
+
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
 
 class Simulator:
     def __init__(self):
@@ -30,7 +43,7 @@ class Simulator:
     ################################################################################################################################################################################################
     
     def time_in(self):
-        data=numpy.random.exponential(0.3,size=None)
+        data=numpy.random.exponential(2,size=None)
         return data
 
     ################################################################################################################################################################################################
@@ -61,7 +74,7 @@ class Simulator:
     ################################################################################################################################################################################################
    
     def get_V(self):
-        print(self.i)
+        #print(self.i)
         return 1-(self.T[0]/self.i)
 
     ################################################################################################################################################################################################
@@ -175,7 +188,8 @@ class Simulator:
 
             if(self.futureEvent):
                 self.i=self.futureEvent[0]["simTime"]
-                    
+
+bcolors=bcolors()             
 thetaki_array=[]
 v_array=[]
 x_array=[]                
@@ -189,16 +203,15 @@ info=input()
 
 for index in range(simulations):
     Obsim.begin(customerNum)
-    print("\n","T:",Obsim.get_T(),"\n",
-        "theta:",Obsim.get_theta(),"\n",#SI
-        "ThetaKi:",Obsim.get_thetaKi(),"\n",
-        "X:",Obsim.get_X(),#SI
-        "\n","V:",Obsim.get_V(),"\n")#SI
-    print("End simulation: ",index+1)
-
-v_array.append(Obsim.get_V())
-thetaki_array.append(Obsim.get_thetaKi())
-x_array.append(Obsim.get_X())
+    print("\n",bcolors.OKCYAN+"T:"+bcolors.ENDC,Obsim.get_T(),"\n",
+        bcolors.OKCYAN+"theta:"+bcolors.ENDC,Obsim.get_theta(),"\n",#SI
+        bcolors.OKCYAN+"ThetaKi:"+bcolors.ENDC,Obsim.get_thetaKi(),"\n",
+        bcolors.OKCYAN+"X:"+bcolors.ENDC,Obsim.get_X(),#SI
+        "\n",bcolors.OKCYAN+"V:"+bcolors.ENDC,Obsim.get_V(),"\n")#SI
+    print(bcolors.OKGREEN+"END SIMULATION: "+bcolors.ENDC,index+1,'\n')
+    v_array.append(Obsim.get_V())
+    thetaki_array.append(Obsim.get_thetaKi())
+    x_array.append(Obsim.get_X())
 
 ####Confidence Intervall############
 alpha=((100-95)/100)/2
@@ -235,6 +248,6 @@ H_x=1.98*(sqrt(s2_x)/sqrt(index))
 
 #####Final values###########
 
-print('Risultati:',(expected_thetaki-H_thetaki),'< thetaki <',(expected_thetaki+H_thetaki))
-print('Risultati:',(expected_v-H_v),'< v <',(expected_v+H_v))
-print('Risultati:',(expected_x-H_x),'< x <',(expected_x+H_x))
+print(bcolors.OKGREEN+'RISULTATI:'+bcolors.ENDC,(expected_thetaki-H_thetaki),bcolors.OKCYAN+'< thetaki <'+bcolors.ENDC,(expected_thetaki+H_thetaki))
+print(bcolors.OKGREEN+'RISULTATI:'+bcolors.ENDC,(expected_v-H_v),bcolors.OKCYAN+'< v <'+bcolors.ENDC,(expected_v+H_v))
+print(bcolors.OKGREEN+'RISULTATI:'+bcolors.ENDC,(expected_x-H_x),bcolors.OKCYAN+'< x <'+bcolors.ENDC,(expected_x+H_x))
