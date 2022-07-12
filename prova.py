@@ -1,3 +1,5 @@
+from math import sqrt
+from hamcrest import none
 import numpy
 import time
 
@@ -28,14 +30,14 @@ class Simulator:
     ################################################################################################################################################################################################
     
     def time_in(self):
-        data=numpy.random.exponential(3.0,size=1)
-        return data[0]
+        data=numpy.random.exponential(0.3,size=None)
+        return data
 
     ################################################################################################################################################################################################
     
     def generate_Time(self):#this is used for the service time but is limited in a range between 10 and 1
-        data=numpy.random.exponential(3.0,size=1)
-        return data[0]
+        data=numpy.random.exponential(0.3,size=None)
+        return data
 
     ################################################################################################################################################################################################
     
@@ -174,7 +176,9 @@ class Simulator:
             if(self.futureEvent):
                 self.i=self.futureEvent[0]["simTime"]
                     
-                    
+thetaki_array=[]
+v_array=[]
+x_array=[]                
 Obsim=Simulator()
 print("Number of simulations: ")
 simulations=int(input())
@@ -186,9 +190,51 @@ info=input()
 for index in range(simulations):
     Obsim.begin(customerNum)
     print("\n","T:",Obsim.get_T(),"\n",
-        "theta:",Obsim.get_theta(),"\n",
+        "theta:",Obsim.get_theta(),"\n",#SI
         "ThetaKi:",Obsim.get_thetaKi(),"\n",
-        "X:",Obsim.get_X(),
-        "\n","V:",Obsim.get_V(),"\n")
-    print("End simulation: ",index)
+        "X:",Obsim.get_X(),#SI
+        "\n","V:",Obsim.get_V(),"\n")#SI
+    print("End simulation: ",index+1)
 
+v_array.append(Obsim.get_V())
+thetaki_array.append(Obsim.get_thetaKi())
+x_array.append(Obsim.get_X())
+
+####Confidence Intervall############
+alpha=((100-95)/100)/2
+t=1.98
+expected_v=0
+expected_x=0
+expected_thetaki=0
+s2_thetaki=0
+s2_x=0
+s2_v=0
+
+for key in range(len(thetaki_array)):
+    expected_thetaki+=thetaki_array[key]
+    expected_x+=x_array[key]
+    expected_v+=v_array[key]
+
+expected_thetaki=expected_thetaki/index
+expected_v=expected_v/index
+expected_x=expected_x/index
+
+for key in range(len(thetaki_array)):
+    s2_thetaki=pow(thetaki_array[key]- expected_thetaki,2)
+    s2_x=pow((x_array[key]- expected_x),2)
+    s2_v=pow((v_array[key]- expected_v),2)
+
+
+s2_thetaki=s2_thetaki/(index-1)
+s2_x=s2_x/(index-1)
+s2_v=s2_v/(index-1)
+
+H_thetaki=1.98*(sqrt(s2_thetaki)/sqrt(index))
+H_v=1.98*(sqrt(s2_v)/sqrt(index))
+H_x=1.98*(sqrt(s2_x)/sqrt(index))
+
+#####Final values###########
+
+print('Risultati:',(expected_thetaki-H_thetaki),'< thetaki <',(expected_thetaki+H_thetaki))
+print('Risultati:',(expected_v-H_v),'< v <',(expected_v+H_v))
+print('Risultati:',(expected_x-H_x),'< x <',(expected_x+H_x))
