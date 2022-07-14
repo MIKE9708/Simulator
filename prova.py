@@ -1,5 +1,6 @@
 from hashlib import new
 from math import sqrt
+from tkinter import CENTER
 from hamcrest import none
 import numpy
 
@@ -34,6 +35,7 @@ class Simulator:
         self.queue=[]
         self.theta={}
         self.T={}
+        self.serverState=0
 
     ################################################################################################################################################################################################
     
@@ -49,7 +51,7 @@ class Simulator:
     ################################################################################################################################################################################################
     
     def generate_Time(self):#this is used for the service time but is limited in a range between 10 and 1
-        data=numpy.random.exponential(1,size=None)%10
+        data=numpy.random.exponential(1,size=None)
         return data
 
     ################################################################################################################################################################################################
@@ -61,7 +63,7 @@ class Simulator:
     
     def get_thetaKi(self):
         res=0
-        print(self.N,self.futureEvent)
+        #print(self.N,self.futureEvent)
         for elem in self.theta:
             res+=self.theta[elem]
         return res/self.N
@@ -81,6 +83,12 @@ class Simulator:
 
     ################################################################################################################################################################################################
     
+    def get_Time(self):
+        return self.i
+    
+    
+    ################################################################################################################################################################################################
+
     def begin(self,customer):
         self.futureEvent=[]
         custNum=0
@@ -94,10 +102,10 @@ class Simulator:
         custNum+=1
         while(1):
             if self.i>=customer:
-                break
+                return
             if(self.futureEvent):
-                if info=='y':
-                    print(self.i)
+                #if info=='y':
+                    #print(self.i)
                     #print(self.futureEvent)
 
                 if self.futureEvent[0]["simTime"]==self.i:
@@ -115,11 +123,11 @@ class Simulator:
                                 "interarrival":self.i-self.futureEvent[0]["simTime"],
                                 "arrival":self.futureEvent[0]['simTime'],
                                 "serviceTime":service}
-                            self.serverState=1
                             self.futureEvent.append({"customer":self.futureEvent[0]["customer"],
                                 "simTime":self.i+service,
                                 "event":"departure"})
                             self.futureEvent=sorted(self.futureEvent, key=lambda d: d["simTime"])
+                            self.serverState=1
 
                         else:
                             self.queue.append({"customer":self.futureEvent[0]["customer"],
@@ -176,9 +184,9 @@ class Simulator:
 
                         self.futureEvent=sorted(self.futureEvent, key=lambda d: d["simTime"])
 
-                        if(self.queue):
-                            if info=='y':
-                                print(str(self.queue)+'\n')
+                        #if(self.queue):
+                            #if info=='y':
+                            #    print(str(self.queue)+'\n')
                             
                 
                     else:
@@ -191,6 +199,32 @@ class Simulator:
 
             if(self.futureEvent):
                 self.i=self.futureEvent[0]["simTime"]
+
+
+def formatOutput(object):
+    res='\n'.center(10)
+    counter=0
+    for value in object:
+        if counter==4:
+            res+='     '+str(value)+':  '+str(object[value])+'\n\n'.center(10)
+            counter=0
+        elif counter==0:
+            res+=str(value)+':  '+str(object[value])
+            counter+=1
+        else:
+            res+='     '+str(value)+':  '+str(object[value])
+            counter+=1
+    return res
+
+
+
+
+
+
+
+
+
+
 
 bcolors=bcolors()             
 thetaki_array=[]
@@ -206,12 +240,14 @@ info=input()
 
 for index in range(simulations):
     Obsim.begin(customerNum)
-    print("\n",bcolors.OKCYAN+"T:"+bcolors.ENDC,Obsim.get_T(),"\n",
-        bcolors.OKCYAN+"theta:"+bcolors.ENDC,Obsim.get_theta(),"\n",#SI
-        bcolors.OKCYAN+"ThetaKi:"+bcolors.ENDC,Obsim.get_thetaKi(),"\n",
-        bcolors.OKCYAN+"X:"+bcolors.ENDC,Obsim.get_X(),#SI
-        "\n",bcolors.OKCYAN+"V:"+bcolors.ENDC,Obsim.get_V(),"\n")#SI
-    print(bcolors.OKGREEN+"END SIMULATION: "+bcolors.ENDC,index+1,'\n')
+    print(bcolors.OKGREEN+"END SIMULATION: "+bcolors.ENDC,index+1,bcolors.OKGREEN," time: ",bcolors.ENDC,Obsim.get_Time(),'\n')
+    if(info=='y'):
+        print(bcolors.OKGREEN,"Results:",bcolors.ENDC)
+        print("\n",bcolors.OKCYAN+"T:"+bcolors.ENDC,'{',formatOutput(Obsim.get_T()),'}',"\n\n",
+            bcolors.OKCYAN+"theta:"+bcolors.ENDC,'{',formatOutput(Obsim.get_theta()),'}',"\n\n",#SI
+            bcolors.OKCYAN+"ThetaKi:"+bcolors.ENDC,Obsim.get_thetaKi(),"\n",
+            bcolors.OKCYAN+"X:"+bcolors.ENDC,Obsim.get_X(),#SI
+            "\n",bcolors.OKCYAN+"V:"+bcolors.ENDC,Obsim.get_V(),"\n")#SI
     v_array.append(Obsim.get_V())
     thetaki_array.append(Obsim.get_thetaKi())
     x_array.append(Obsim.get_X())
