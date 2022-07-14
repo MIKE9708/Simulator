@@ -43,13 +43,13 @@ class Simulator:
     ################################################################################################################################################################################################
     
     def time_in(self):
-        data=numpy.random.exponential(2,size=None)
+        data=numpy.random.exponential(1,size=None)
         return data
 
     ################################################################################################################################################################################################
     
     def generate_Time(self):#this is used for the service time but is limited in a range between 10 and 1
-        data=numpy.random.exponential(0.3,size=None)
+        data=numpy.random.exponential(1,size=None)%10
         return data
 
     ################################################################################################################################################################################################
@@ -61,6 +61,7 @@ class Simulator:
     
     def get_thetaKi(self):
         res=0
+        print(self.N,self.futureEvent)
         for elem in self.theta:
             res+=self.theta[elem]
         return res/self.N
@@ -69,6 +70,7 @@ class Simulator:
     def get_X(self):
         res=0
         for elem in self.T:
+            #print(elem,self.T[elem])
             res+=elem*self.T[elem]
         return res/self.i
     ################################################################################################################################################################################################
@@ -81,15 +83,18 @@ class Simulator:
     
     def begin(self,customer):
         self.futureEvent=[]
-        custNum=[*range(1,customer+1)]#an array of N element corrwsponding to the number of customer that are specified
+        custNum=0
+        #[*range(1,customer+1)]#an array of N element corrwsponding to the number of customer that are specified
         tStart=0
         self.i=0
         self.N=0
         data=0
         self.restart()
-        self.futureEvent.append({"customer":custNum[0],"simTime":0,"event":"arrive"})
+        self.futureEvent.append({"customer":custNum,"simTime":0,"event":"arrive"})
+        custNum+=1
         while(1):
-
+            if self.i>=customer:
+                break
             if(self.futureEvent):
                 if info=='y':
                     print(self.i)
@@ -105,19 +110,15 @@ class Simulator:
                             self.T[len(self.queue)]+=self.i-tStart
                         else:
                             self.T[len(self.queue)]=self.i-tStart
-
                         if(self.serverState==0):
                             self.current={"customer":self.futureEvent[0]["customer"],
                                 "interarrival":self.i-self.futureEvent[0]["simTime"],
                                 "arrival":self.futureEvent[0]['simTime'],
                                 "serviceTime":service}
-
                             self.serverState=1
-
                             self.futureEvent.append({"customer":self.futureEvent[0]["customer"],
                                 "simTime":self.i+service,
                                 "event":"departure"})
-
                             self.futureEvent=sorted(self.futureEvent, key=lambda d: d["simTime"])
 
                         else:
@@ -127,36 +128,38 @@ class Simulator:
                                 "serviceTime":service
                                 })
  
-                        if(custNum):
-                            custNum.pop(0)
+                        #if(custNum):
+                        #    custNum.pop(0)
 
-                        if(custNum):
-                            data=self.time_in()
-                            self.futureEvent.append({"customer":custNum[0],
+                        #if(custNum):
+                        data=self.time_in()
+                        self.futureEvent.append({"customer":custNum,
                                 "simTime":data+self.futureEvent[len(self.futureEvent)-1]["simTime"],
                                 "event":"arrive"})
-                            
+                        custNum+=1    
                         self.futureEvent.pop(0)
                         self.futureEvent=sorted(self.futureEvent, key=lambda d: d["simTime"])
                         tStart=self.i
                     
                     elif self.futureEvent[0]["event"]=="departure":
                         self.futureEvent.pop(0)
+                        self.N+=1
                         tStart=self.i
-                        if(custNum):
-                            custNum.pop(0)
-                        if(custNum):
-                            data=self.time_in()
-                            self.futureEvent.append({"customer":custNum[0],
+                        #if(custNum):
+                        #    custNum.pop(0)
+                        #if(custNum):
+                        data=self.time_in()
+                        self.futureEvent.append({"customer":custNum,
                                 "simTime":data+self.futureEvent[len(self.futureEvent)-1]["simTime"],
                                 "event":"arrive"})
-                            self.futureEvent=sorted(self.futureEvent, key=lambda d: d["simTime"])
+                        custNum+=1
+                        self.futureEvent=sorted(self.futureEvent, key=lambda d: d["simTime"])
                         if len(self.queue) in self.T.keys():
                             self.T[len(self.queue)]+=self.i-tStart
                         else:
                             self.T[len(self.queue)]=self.i-tStart
 
-                        self.N+=1
+                        
                         self.theta[self.current["customer"]]=self.i-self.current["arrival"]
 
                         if(self.queue):
