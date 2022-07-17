@@ -4,6 +4,37 @@ from tkinter import CENTER
 from hamcrest import none
 import numpy
 
+def formatOutput(object):
+    res='\n'.center(10)
+    counter=0
+    for value in object:
+        if counter==4:
+            res+='     '+str(value)+':  '+str(object[value])+'\n\n'.center(10)
+            counter=0
+        elif counter==0:
+            res+=str(value)+':  '+str(object[value])
+            counter+=1
+        else:
+            res+='     '+str(value)+':  '+str(object[value])
+            counter+=1
+    return res
+
+
+def expected_value(elem,n):
+    res=0
+    for key in range(len(elem)):
+        res+=elem[key]
+    return res/n
+
+def s2_evaluate(elem,expected_value,n):
+    res=0
+    for key in range(len(elem)):
+        res=pow(elem[key]- expected_value,2)
+    return res/(n-1)
+
+def H_evaluate(s2_val,n):
+    return 1.98*(sqrt(s2_val)/sqrt(n))
+
 
 class bcolors:
     HEADER = '\033[95m'
@@ -89,7 +120,7 @@ class Simulator:
     
     ################################################################################################################################################################################################
 
-    def begin(self,customer):
+    def begin(self,time):
         self.futureEvent=[]
         custNum=0
         #[*range(1,customer+1)]#an array of N element corrwsponding to the number of customer that are specified
@@ -99,17 +130,19 @@ class Simulator:
         data=0
         self.restart()
         self.futureEvent.append({"customer":custNum,"simTime":0,"event":"arrive"})
+        self.futureEvent.append({"simTime":time,"event":"end"})
         custNum+=1
         while(1):
-            if self.i>=customer:
-                return
+            #if self.i>=customer:
+            #    return
             if(self.futureEvent):
                 #if info=='y':
                     #print(self.i)
                     #print(self.futureEvent)
-
                 if self.futureEvent[0]["simTime"]==self.i:
                     
+                    if self.futureEvent[0]['event']=='end':
+                        return
                     if self.futureEvent[0]["event"]=="arrive":
                         service=self.generate_Time()
                         data=self.time_in()
@@ -142,7 +175,7 @@ class Simulator:
                         #if(custNum):
                         data=self.time_in()
                         self.futureEvent.append({"customer":custNum,
-                                "simTime":data+self.futureEvent[len(self.futureEvent)-1]["simTime"],
+                                "simTime":data+self.i,
                                 "event":"arrive"})
                         custNum+=1    
                         self.futureEvent.pop(0)
@@ -200,32 +233,6 @@ class Simulator:
             if(self.futureEvent):
                 self.i=self.futureEvent[0]["simTime"]
 
-
-def formatOutput(object):
-    res='\n'.center(10)
-    counter=0
-    for value in object:
-        if counter==4:
-            res+='     '+str(value)+':  '+str(object[value])+'\n\n'.center(10)
-            counter=0
-        elif counter==0:
-            res+=str(value)+':  '+str(object[value])
-            counter+=1
-        else:
-            res+='     '+str(value)+':  '+str(object[value])
-            counter+=1
-    return res
-
-
-
-
-
-
-
-
-
-
-
 bcolors=bcolors()             
 thetaki_array=[]
 v_array=[]
@@ -233,15 +240,15 @@ x_array=[]
 Obsim=Simulator()
 print("Number of simulations: ")
 simulations=int(input())
-print("Number of customers: ")
+print("Simulation time: ")
 customerNum=int(input())
 print("Show info ? (y/n): ")
 info=input()
 
 for index in range(simulations):
     Obsim.begin(customerNum)
-    print(bcolors.OKGREEN+"END SIMULATION: "+bcolors.ENDC,index+1,bcolors.OKGREEN," time: ",bcolors.ENDC,Obsim.get_Time(),'\n')
     if(info=='y'):
+        print(bcolors.OKGREEN+"END SIMULATION: "+bcolors.ENDC,index+1,bcolors.OKGREEN," time: ",bcolors.ENDC,Obsim.get_Time(),'\n')
         print(bcolors.OKGREEN,"Results:",bcolors.ENDC)
         print("\n",bcolors.OKCYAN+"T:"+bcolors.ENDC,'{',formatOutput(Obsim.get_T()),'}',"\n\n",
             bcolors.OKCYAN+"theta:"+bcolors.ENDC,'{',formatOutput(Obsim.get_theta()),'}',"\n\n",#SI
@@ -262,28 +269,24 @@ s2_thetaki=0
 s2_x=0
 s2_v=0
 
-for key in range(len(thetaki_array)):
-    expected_thetaki+=thetaki_array[key]
-    expected_x+=x_array[key]
-    expected_v+=v_array[key]
+#for key in range(len(thetaki_array)):
+expected_thetaki=expected_value(thetaki_array,index)
+expected_x=expected_value(x_array,index)
+expected_v=expected_value(v_array,index)
 
-expected_thetaki=expected_thetaki/index
-expected_v=expected_v/index
-expected_x=expected_x/index
-
-for key in range(len(thetaki_array)):
-    s2_thetaki=pow(thetaki_array[key]- expected_thetaki,2)
-    s2_x=pow((x_array[key]- expected_x),2)
-    s2_v=pow((v_array[key]- expected_v),2)
+#for key in range(len(thetaki_array)):
+s2_thetaki=s2_evaluate(thetaki_array,expected_thetaki,index)
+s2_x=s2_evaluate(x_array,expected_x,index)
+s2_v=s2_evaluate(v_array,expected_v,index)
 
 
-s2_thetaki=s2_thetaki/(index-1)
-s2_x=s2_x/(index-1)
-s2_v=s2_v/(index-1)
+#s2_thetaki=s2_thetaki/(index-1)
+#s2_x=s2_x/(index-1)
+#s2_v=s2_v/(index-1)
 
-H_thetaki=1.98*(sqrt(s2_thetaki)/sqrt(index))
-H_v=1.98*(sqrt(s2_v)/sqrt(index))
-H_x=1.98*(sqrt(s2_x)/sqrt(index))
+H_thetaki=H_evaluate(s2_thetaki,index)
+H_v=H_evaluate(s2_v,index)
+H_x=H_evaluate(s2_x,index)
 
 #####Final values###########
 
